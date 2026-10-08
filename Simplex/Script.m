@@ -70,18 +70,60 @@ plot(Error_Absoluto_Ps,Error_Absoluto_Pd,'o')
 %% -------------------------------------------------------------------------
 % 4) Optimizacion de errores
 % -------------------------------------------------------------------------
+% 2. Configurar opciones de Simplex (opcional, para ver las iteraciones)
+opciones = optimset('Display', 'iter', 'TolX', 1e-4, 'TolFun', 1e-4);
+
 % 3. Crear una función anónima que le pase las variables extra a nuestra función de costo
-% 'u' será el vector que Simplex irá modificando: u = [uSist, uDiast]
-funcionObjetivo = MSE_total([uSist uDiast], A, PrampaDig, tm, PS_GS, PD_GS, N);
+% 'params' será el vector que Simplex irá modificando: 
+funcionObjetivo =@(params)  MSE_total(params, A, PrampaDig, tm, PS_GS, PD_GS);
 
 % 4. Ejecutar algoritmo Simplex (Nelder-Mead)
 fprintf('Iniciando optimizacion Simplex...\n');
-umbralesOptimos = fminsearch(funcionObjetivo, x0, opciones);
+umbralesOptimos = fminsearch(funcionObjetivo, [uSist uDiast], opciones);
 
 % 5. Resultados
-uSist_Opt = umbralesOptimos(1);
-uDiast_Opt = umbralesOptimos(2);
+uSistOpt = umbralesOptimos(1);
+uDiastOpt = umbralesOptimos(2);
 
 fprintf('\n=== OPTIMIZACION FINALIZADA ===\n');
-fprintf('Umbral Sistólico Óptimo: %.4f\n', uSist_Opt);
-fprintf('Umbral Diastólico Óptimo: %.4f\n', uDiast_Opt);
+fprintf('Umbral Sistólico Óptimo: %.4f\n', uSistOpt);
+fprintf('Umbral Diastólico Óptimo: %.4f\n', uDiastOpt);
+%% Grafico de los umbrales optimos
+% 1. Recalcular las presiones usando los umbrales optimizados
+nSignals = size(A,1);
+PS_opt = zeros(1, nSignals);
+PD_opt = zeros(1, nSignals);
+
+for i = 1:nSignals
+    Ai   = A(i,:);
+    Pi   = PrampaDig(i,:);
+    tmi  = tm(i,:);
+    [PS_opt(i), PD_opt(i)] = detectarPSyPD(uSistOpt, uDiastOpt, Ai, Pi, tmi);
+end
+
+% 3. Graficar 1vs1 (Ground Truth vs Algoritmo Optimizado)
+figure('Name', 'Comparación 1vs1: GS vs Optimización', 'NumberTitle', 'off');
+hold on;
+grid on;
+
+% Graficar Sistólica (Puntos rojos)
+scatter(PS_GS, PS_opt, 50, 'r', 'filled', 'MarkerEdgeColor', 'k', 'DisplayName', 'Sistólica');
+
+% Graficar Diastólica (Puntos azules)
+scatter(PD_GS, PD_opt, 50, 'b', 'filled', 'MarkerEdgeColor', 'k', 'DisplayName', 'Diastólica');
+
+% Calcular los límites para la línea de identidad (y = x)
+min_val = min([PS_GS, PD_GS, PS_opt, PD_opt]) - 10;
+max_val = max([PS_GS, PD_GS, PS_opt, PD_opt]) + 10;
+
+% Trazar la línea ideal (y = x)
+plot([min_val max_val], [min_val max_val], 'k--', 'LineWidth', 1.5, 'DisplayName', 'Ideal (y = x)');
+
+% Etiquetas y diseño
+xlabel('Presión de Referencia (Gold Standard) [mmHg]', 'FontWeight', 'bold');
+ylabel('Presión Estimada con Algoritmo [mmHg]', 'FontWeight', 'bold');
+title(sprintf('Correlación 1 vs 1 (Umbrales: S=%.2f, D=%.2f)', uSistOpt, uDiastOpt));
+legend('Location', 'best');
+axis([min_val max_val min_val max_val]); % Mantener la misma escala en ambos ejes
+axis square; % Forzar la caja gráfica a ser cuadrada para visualizar mejor el y=x
+hold off;
