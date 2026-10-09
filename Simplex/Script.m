@@ -134,8 +134,8 @@ hold off;
 
 % --- Validación en consola ---
 fprintf('\n=== VALIDACIÓN DE ERROR OPTIMIZADO (Criterio < 5 mmHg) ===\n');
-fprintf('Error Medio Sistólico  (PS): %6.2f mmHg (Std: %.2f)\n', mean(PS_opt - PS_GS), std(PS_opt - PS_GS));
-fprintf('Error Medio Diastólico (PD): %6.2f mmHg (Std: %.2f)\n', mean(PD_opt - PD_GS), std(PD_opt - PD_GS));
+fprintf('Error Medio Sistólico  (PS): %6.2f mmHg (Desviacion estandar: %.2f)\n', mean(PS_opt - PS_GS), std(PS_opt - PS_GS));
+fprintf('Error Medio Diastólico (PD): %6.2f mmHg (Desviacion estandar: %.2f)\n', mean(PD_opt - PD_GS), std(PD_opt - PD_GS));
 
 % --- Cálculo de Regresión y R^2 (usando polyfit y corrcoef) ---
 p_ps = polyfit(PS_GS, PS_opt, 1);       
