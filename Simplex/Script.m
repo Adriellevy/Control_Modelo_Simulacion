@@ -127,3 +127,77 @@ legend('Location', 'best');
 axis([min_val max_val min_val max_val]); % Mantener la misma escala en ambos ejes
 axis square; % Forzar la caja gráfica a ser cuadrada para visualizar mejor el y=x
 hold off;
+
+%% -------------------------------------------------------------------------
+% 5) Validación del Error Medio (< 5 mmHg), Regresión y Gráficos
+% -------------------------------------------------------------------------
+
+% --- Validación en consola ---
+fprintf('\n=== VALIDACIÓN DE ERROR OPTIMIZADO (Criterio < 5 mmHg) ===\n');
+fprintf('Error Medio Sistólico  (PS): %6.2f mmHg (Std: %.2f)\n', mean(PS_opt - PS_GS), std(PS_opt - PS_GS));
+fprintf('Error Medio Diastólico (PD): %6.2f mmHg (Std: %.2f)\n', mean(PD_opt - PD_GS), std(PD_opt - PD_GS));
+
+% --- Cálculo de Regresión y R^2 (usando polyfit y corrcoef) ---
+p_ps = polyfit(PS_GS, PS_opt, 1);       
+R_ps = corrcoef(PS_GS, PS_opt);
+
+p_pd = polyfit(PD_GS, PD_opt, 1);       
+R_pd = corrcoef(PD_GS, PD_opt);
+
+% --- Creación de la Figura ---
+figure('Name', 'Análisis Estadístico Avanzado', 'NumberTitle', 'off');
+
+% 1. Histograma de Errores (Estimado - GS)
+subplot(2, 2, 1);
+histogram(PS_opt - PS_GS, 'FaceColor', 'r', 'FaceAlpha', 0.6);
+hold on;
+histogram(PD_opt - PD_GS, 'FaceColor', 'b', 'FaceAlpha', 0.6);
+xline(5, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Límite +5 mmHg'); 
+xline(-5, 'k--', 'LineWidth', 1.5, 'HandleVisibility','off');
+title('Histograma de Errores Optimizado');
+xlabel('Error [mmHg]');
+ylabel('Frecuencia');
+legend('Sistólica (PS)', 'Diastólica (PD)', 'Límite \pm5 mmHg');
+grid on;
+hold off;
+
+% 2. Gráfico de Residuos (Error vs GS)
+subplot(2, 2, 2);
+scatter(PS_GS, PS_opt - PS_GS, 30, 'r', 'filled');
+hold on;
+scatter(PD_GS, PD_opt - PD_GS, 30, 'b', 'filled');
+yline(0, 'k-', 'LineWidth', 1.5);
+yline(5, 'k--', 'LineWidth', 1.5);
+yline(-5, 'k--', 'LineWidth', 1.5);
+title('Análisis de Residuos');
+xlabel('Presión de Referencia (GS) [mmHg]');
+ylabel('Residuo [mmHg]');
+legend('Residuos PS', 'Residuos PD', 'Error 0', 'Límite \pm5 mmHg', 'Location','best');
+grid on;
+hold off;
+
+% 3. Regresión Sistólica (PS_GS vs PS_opt)
+subplot(2, 2, 3);
+scatter(PS_GS, PS_opt, 30, 'r', 'filled');
+hold on;
+plot(PS_GS, polyval(p_ps, PS_GS), 'k-', 'LineWidth', 1.5);
+title('Regresión Sistólica');
+xlabel('PS Referencia [mmHg]');
+ylabel('PS Estimada [mmHg]');
+eq_str_ps = sprintf('y = %.2fx + %.2f\nR^2 = %.4f', p_ps(1), p_ps(2), R_ps(1,2)^2);
+text(min(PS_GS), max(PS_opt), eq_str_ps, 'VerticalAlignment', 'top', 'FontSize', 10, 'FontWeight', 'bold');
+grid on;
+hold off;
+
+% 4. Regresión Diastólica (PD_GS vs PD_opt)
+subplot(2, 2, 4);
+scatter(PD_GS, PD_opt, 30, 'b', 'filled');
+hold on;
+plot(PD_GS, polyval(p_pd, PD_GS), 'k-', 'LineWidth', 1.5);
+title('Regresión Diastólica');
+xlabel('PD Referencia [mmHg]');
+ylabel('PD Estimada [mmHg]');
+eq_str_pd = sprintf('y = %.2fx + %.2f\nR^2 = %.4f', p_pd(1), p_pd(2), R_pd(1,2)^2);
+text(min(PD_GS), max(PD_opt), eq_str_pd, 'VerticalAlignment', 'top', 'FontSize', 10, 'FontWeight', 'bold');
+grid on;
+hold off;
