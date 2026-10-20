@@ -101,41 +101,123 @@ for i = 1:nSignals
     [PS_opt(i), PD_opt(i)] = detectarPSyPD(uSistOpt, uDiastOpt, Ai, Pi, tmi);
 end
 
-% 3. Graficar 1vs1 (Ground Truth vs Algoritmo Optimizado)
-figure('Name', 'Comparación 1vs1: GS vs Optimización', 'NumberTitle', 'off');
+% 2. Cálculo de errores medios y métricas (Simplex y MAA)
+% a. Modelo optimizado con Simplex
+Error_PS_opt = PS_opt - PS_GS;
+Error_PD_opt = PD_opt - PD_GS;
+
+mean_Error_PS_opt = mean(Error_PS_opt);
+mean_Error_PD_opt = mean(Error_PD_opt);
+std_Error_PS_opt  = std(Error_PS_opt);
+std_Error_PD_opt  = std(Error_PD_opt);
+var_Error_PS_opt  = var(Error_PS_opt);
+var_Error_PD_opt  = var(Error_PD_opt);
+
+var_Error_PS = var_Error_PS_opt;
+var_Error_PD = var_Error_PD_opt;
+std_Error_PS = std_Error_PS_opt;
+std_Error_PD = std_Error_PD_opt;
+
+% b. Modelo empírico inicial MAA
+mean_Error_PS_MAA = mean(Error_PS);
+mean_Error_PD_MAA = mean(Error_PD);
+
+% Límites comunes para la línea ideal (y = x) en ambos subplots
+min_val = min([PS_GS, PD_GS, PS_opt, PD_opt, PS_MAA, PD_MAA]) - 10;
+max_val = max([PS_GS, PD_GS, PS_opt, PD_opt, PS_MAA, PD_MAA]) + 10;
+
+% 3. Graficar 1vs1 comparativo: Simplex Optimizado (1,2,1) vs MAA Inicial (1,2,2)
+figure('Name', 'Comparación 1vs1: Simplex vs MAA (frente a GS)', 'NumberTitle', 'off', 'Position', [100, 100, 1200, 550]);
+
+% -------------------------------------------------------------------------
+% Subplot (1,2,1): Simplex Optimizado vs GS
+% -------------------------------------------------------------------------
+subplot(1, 2, 1);
 hold on;
 grid on;
 
-% Graficar Sistólica (Puntos rojos)
-scatter(PS_GS, PS_opt, 50, 'r', 'filled', 'MarkerEdgeColor', 'k', 'DisplayName', 'Sistólica');
-
-% Graficar Diastólica (Puntos azules)
-scatter(PD_GS, PD_opt, 50, 'b', 'filled', 'MarkerEdgeColor', 'k', 'DisplayName', 'Diastólica');
-
-% Calcular los límites para la línea de identidad (y = x)
-min_val = min([PS_GS, PD_GS, PS_opt, PD_opt]) - 10;
-max_val = max([PS_GS, PD_GS, PS_opt, PD_opt]) + 10;
+% Graficar Sistólica y Diastólica (Simplex)
+scatter(PS_GS, PS_opt, 50, 'r', 'filled', 'MarkerEdgeColor', 'k', ...
+    'DisplayName', sprintf('Sistólica (Error Medio: %.2f mmHg)', mean_Error_PS_opt));
+scatter(PD_GS, PD_opt, 50, 'b', 'filled', 'MarkerEdgeColor', 'k', ...
+    'DisplayName', sprintf('Diastólica (Error Medio: %.2f mmHg)', mean_Error_PD_opt));
 
 % Trazar la línea ideal (y = x)
 plot([min_val max_val], [min_val max_val], 'k--', 'LineWidth', 1.5, 'DisplayName', 'Ideal (y = x)');
 
+% Cuadro informativo con datos de Error Medio (Simplex)
+txt_err_opt = {
+    '\bfError Medio (Simplex - GS):\rm'
+    sprintf('  Sistólica (PS):  %.2f mmHg', mean_Error_PS_opt)
+    sprintf('  Diastólica (PD): %.2f mmHg', mean_Error_PD_opt)
+};
+
+text(0.04, 0.94, txt_err_opt, ...
+    'Units', 'normalized', ...
+    'VerticalAlignment', 'top', ...
+    'HorizontalAlignment', 'left', ...
+    'FontSize', 8.5, ...
+    'EdgeColor', [0.6 0.6 0.6], ...
+    'BackgroundColor', [0.97 0.97 0.97], ...
+    'Margin', 5);
+
 % Etiquetas y diseño
 xlabel('Presión de Referencia (Gold Standard) [mmHg]', 'FontWeight', 'bold');
-ylabel('Presión Estimada con Algoritmo [mmHg]', 'FontWeight', 'bold');
-title(sprintf('Correlación 1 vs 1 (Umbrales: S=%.2f, D=%.2f)', uSistOpt, uDiastOpt));
-legend('Location', 'best');
-axis([min_val max_val min_val max_val]); % Mantener la misma escala en ambos ejes
-axis square; % Forzar la caja gráfica a ser cuadrada para visualizar mejor el y=x
+ylabel('Presión Estimada con Simplex [mmHg]', 'FontWeight', 'bold');
+title(sprintf('Simplex Optimizado: 1 vs 1 (S=%.2f, D=%.2f)', uSistOpt, uDiastOpt));
+legend('Location', 'southeast');
+axis([min_val max_val min_val max_val]);
+axis square;
 hold off;
 
+% -------------------------------------------------------------------------
+% Subplot (1,2,2): Método MAA Inicial vs GS
+% -------------------------------------------------------------------------
+subplot(1, 2, 2);
+hold on;
+grid on;
+
+% Graficar Sistólica y Diastólica (MAA Inicial)
+scatter(PS_GS, PS_MAA, 50, 'r', 'filled', 'MarkerEdgeColor', 'k', ...
+    'DisplayName', sprintf('Sistólica (Error Medio: %.2f mmHg)', mean_Error_PS_MAA));
+scatter(PD_GS, PD_MAA, 50, 'b', 'filled', 'MarkerEdgeColor', 'k', ...
+    'DisplayName', sprintf('Diastólica (Error Medio: %.2f mmHg)', mean_Error_PD_MAA));
+
+% Trazar la línea ideal (y = x)
+plot([min_val max_val], [min_val max_val], 'k--', 'LineWidth', 1.5, 'DisplayName', 'Ideal (y = x)');
+
+% Cuadro informativo con datos de Error Medio (MAA)
+txt_err_maa = {
+    '\bfError Medio (MAA - GS):\rm'
+    sprintf('  Sistólica (PS):  %.2f mmHg', mean_Error_PS_MAA)
+    sprintf('  Diastólica (PD): %.2f mmHg', mean_Error_PD_MAA)
+};
+
+text(0.04, 0.94, txt_err_maa, ...
+    'Units', 'normalized', ...
+    'VerticalAlignment', 'top', ...
+    'HorizontalAlignment', 'left', ...
+    'FontSize', 8.5, ...
+    'EdgeColor', [0.6 0.6 0.6], ...
+    'BackgroundColor', [0.97 0.97 0.97], ...
+    'Margin', 5);
+
+% Etiquetas y diseño
+xlabel('Presión de Referencia (Gold Standard) [mmHg]', 'FontWeight', 'bold');
+ylabel('Presión Estimada con MAA [mmHg]', 'FontWeight', 'bold');
+title(sprintf('MAA Inicial: 1 vs 1 (S=%.2f, D=%.2f)', uSist, uDiast));
+legend('Location', 'southeast');
+axis([min_val max_val min_val max_val]);
+axis square;
+hold off;
 %% -------------------------------------------------------------------------
 % 5) Validación del Error Medio (< 5 mmHg), Regresión y Gráficos
 % -------------------------------------------------------------------------
 
 % --- Validación en consola ---
 fprintf('\n=== VALIDACIÓN DE ERROR OPTIMIZADO (Criterio < 5 mmHg) ===\n');
-fprintf('Error Medio Sistólico  (PS): %6.2f mmHg (Desviacion estandar: %.2f)\n', mean(PS_opt - PS_GS), std(PS_opt - PS_GS));
-fprintf('Error Medio Diastólico (PD): %6.2f mmHg (Desviacion estandar: %.2f)\n', mean(PD_opt - PD_GS), std(PD_opt - PD_GS));
+fprintf('Error Medio Sistólico  (PS): %6.2f mmHg (Std: %.2f, Varianza: %.2f mmHg^2)\n', mean(Error_PS_opt), std_Error_PS, var_Error_PS);
+fprintf('Error Medio Diastólico (PD): %6.2f mmHg (Std: %.2f, Varianza: %.2f mmHg^2)\n', mean(Error_PD_opt), std_Error_PD, var_Error_PD);
 
 % --- Cálculo de Regresión y R^2 (usando polyfit y corrcoef) ---
 p_ps = polyfit(PS_GS, PS_opt, 1);       

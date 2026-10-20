@@ -1,0 +1,13 @@
+% Planos_Sagitales=
+espacio=x = linspace(x_inicio, x_fin, 50); % Vector espacio de 50 elementos (columnas)
+tiempo=0:1.1/50:1.1-1.1/50;
+GridVelJoven= readtable('GridVelJoven.xlsx');
+Vel_Joven=table2array(GridVelJoven);
+% plot(tiempo,Vel_Joven(1,:))
+
+% imagesc(Vel_Joven(1,:), tiempo, Vel_Joven(:,:)); 
+surf(Vel_Joven(1,:), tiempo, Vel_Joven(:,:))
+colorbar; % Muestra la escala de valores
+xlabel('Espacio');
+ylabel('Tiempo');
+title('Evolución Espaciotemporal (imagesc)');
