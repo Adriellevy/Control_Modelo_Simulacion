@@ -28,7 +28,7 @@ ylabel('Tiempo');
 title('Evolución Espaciotemporal del Joven');
 shading interp; % Suaviza la malla visualmente
 hold on;
-Analisis_onda('2D', umbral_aliasing_2D, espacio, tiempo, Vel_Joven');
+resultado_vp_joven=Analisis_onda('2D', umbral_aliasing_2D, espacio, tiempo, Vel_Joven');
 
 % Subplot 2: Mayor
 subplot(1, 2, 2);
